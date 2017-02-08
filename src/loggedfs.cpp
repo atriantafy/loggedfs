@@ -124,6 +124,22 @@ static char* getcallername()
     return strdup(cmdline);
 }
 
+static char* getcallerargs()
+{
+    char filename[100];
+    sprintf(filename,"/proc/%d/cmdline",fuse_get_context()->pid);
+    FILE * proc=fopen(filename,"rt");
+    char cmdline[1025]="";
+    int numRead = fread(cmdline,sizeof(char),sizeof(cmdline),proc);
+    for (int i = 0; i<numRead; i++) {
+    	if (cmdline[i] == 0) {
+    		cmdline[i] = ' ';
+    	}
+    }
+    fclose(proc);
+    return strdup(cmdline);
+}
+
 static void loggedfs_log(const char* path,const char* action,const int returncode,const char *format,...)
 {
     const char* retname;
@@ -140,9 +156,9 @@ static void loggedfs_log(const char* path,const char* action,const int returncod
         vsprintf(buf,format,args);
         strcat(buf," {%s} [ pid = %d %s uid = %d ]");
         if (returncode >= 0)
-		rLog(Info, buf,retname, fuse_get_context()->pid,config.isPrintProcessNameEnabled()?getcallername():"", fuse_get_context()->uid);
+		rLog(Info, buf,retname, fuse_get_context()->pid,config.isPrintProcessNameEnabled()?getcallerargs():"", fuse_get_context()->uid);
 	else
-		rError( buf,retname, fuse_get_context()->pid,config.isPrintProcessNameEnabled()?getcallername():"", fuse_get_context()->uid);
+		rError( buf,retname, fuse_get_context()->pid,config.isPrintProcessNameEnabled()?getcallerargs():"", fuse_get_context()->uid);
         va_end(args);
     }
 }
